@@ -1,6 +1,7 @@
 package su.terrafirmagreg.core.client;
 
 import net.dries007.tfc.TerraFirmaCraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -17,6 +18,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.jetbrains.annotations.NotNull;
 import su.terrafirmagreg.core.common.data.TFGBlocks;
 import su.terrafirmagreg.core.common.data.TFGContainers;
 import su.terrafirmagreg.core.common.data.TFGFluids;
@@ -24,6 +26,10 @@ import su.terrafirmagreg.core.common.data.TFGParticles;
 import su.terrafirmagreg.core.common.data.capabilities.ILargeEgg;
 import su.terrafirmagreg.core.common.data.capabilities.LargeEggCapability;
 import su.terrafirmagreg.core.common.data.contianer.LargeNestBoxScreen;
+import su.terrafirmagreg.core.common.data.events.AdvancedOreProspectorEventHelper;
+import su.terrafirmagreg.core.common.data.events.NormalOreProspectorEventHelper;
+import su.terrafirmagreg.core.common.data.events.OreProspectorEvent;
+import su.terrafirmagreg.core.common.data.events.WeakOreProspectorEventHelper;
 import su.terrafirmagreg.core.common.data.particles.*;
 
 import javax.annotation.Nullable;
@@ -49,8 +55,66 @@ public final class TFGClientEventHandler {
     }
 
     @SubscribeEvent
-    public void registerParticles(RegisterParticleProvidersEvent event) {
-        // railgun animation
+    public static void onTooltip(@NotNull ItemTooltipEvent event) {
+        var tooltip = event.getToolTip();
+        var stack = event.getItemStack();
+
+        // Check Weak helpers
+        for (WeakOreProspectorEventHelper helper : OreProspectorEvent.getWeakOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                tooltip.add(Component.translatable(
+                        "tooltip.tfg.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)
+                ).withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+
+        // Check Normal helpers
+        for (NormalOreProspectorEventHelper helper : OreProspectorEvent.getNormalOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                tooltip.add(Component.translatable(
+                        "tooltip.tfg.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)
+                ).withStyle(ChatFormatting.YELLOW));
+                tooltip.add(Component.translatable("tooltip.tfg.ore_prospector_count")
+                        .withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+
+        // Check Advanced helpers
+        for (AdvancedOreProspectorEventHelper helper : OreProspectorEvent.getAdvancedOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                // Determine the mode key based on centersOnly
+                String modeKey = helper.isCentersOnly()
+                        ? "tooltip.tfg.ore_prospector_mode_vein"
+                        : "tooltip.tfg.ore_prospector_mode_block";
+
+                tooltip.add(Component.translatable(
+                        "tooltip.tfg.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)
+                ).withStyle(ChatFormatting.YELLOW));
+
+                tooltip.add(Component.translatable("tooltip.tfg.ore_prospector_count")
+                        .withStyle(ChatFormatting.YELLOW));
+                tooltip.add(Component.translatable("tooltip.tfg.ore_prospector_xray",
+                        Component.translatable(modeKey) // pass the localized "vein" or "per block"
+                ).withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void registerParticles(@NotNull RegisterParticleProvidersEvent event) {
+        // railgun
         event.registerSpriteSet(TFGParticles.RAILGUN_BOOM.get(), RailgunBoomProvider::new);
         event.registerSpriteSet(TFGParticles.RAILGUN_AMMO.get(), RailgunAmmoProvider::new);
 
@@ -59,9 +123,9 @@ public final class TFGClientEventHandler {
         event.registerSpriteSet(TFGParticles.ORE_PROSPECTOR_VEIN.get(), OreProspectorVeinProvider::new);
 
         //martian wind
-        event.registerSpriteSet(TFGParticles.DEEP_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 12477985))); // avg color of red sand
-        event.registerSpriteSet(TFGParticles.MEDIUM_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 12878934))); // avg color of ad astra mars sand
-        event.registerSpriteSet(TFGParticles.LIGHT_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 13606745))); // avg color of ad astra venus sand
+        event.registerSpriteSet(TFGParticles.DEEP_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 0xbe6621))); // avg color of red sand
+        event.registerSpriteSet(TFGParticles.MEDIUM_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 0xc48456))); // avg color of ad astra mars sand
+        event.registerSpriteSet(TFGParticles.LIGHT_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 0xcf9f59))); // avg color of ad astra venus sand
     }
 
     @SuppressWarnings("removal")
