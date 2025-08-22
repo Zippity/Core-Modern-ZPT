@@ -13,6 +13,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLConstructModEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -23,14 +24,12 @@ import su.terrafirmagreg.core.common.data.TFGParticles;
 import su.terrafirmagreg.core.common.data.capabilities.ILargeEgg;
 import su.terrafirmagreg.core.common.data.capabilities.LargeEggCapability;
 import su.terrafirmagreg.core.common.data.contianer.LargeNestBoxScreen;
-import su.terrafirmagreg.core.common.data.particles.ColoredWindParticleProvider;
-import su.terrafirmagreg.core.common.data.particles.RailgunAmmoProvider;
-import su.terrafirmagreg.core.common.data.particles.RailgunBoomProvider;
+import su.terrafirmagreg.core.common.data.particles.*;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-
+@Mod.EventBusSubscriber(modid = "tfg", value = net.minecraftforge.api.distmarker.Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class TFGClientEventHandler {
 
     public static final ResourceLocation TFCMetalBlockTexturePattern =
@@ -51,9 +50,18 @@ public final class TFGClientEventHandler {
 
     @SubscribeEvent
     public void registerParticles(RegisterParticleProvidersEvent event) {
+        // railgun animation
         event.registerSpriteSet(TFGParticles.RAILGUN_BOOM.get(), RailgunBoomProvider::new);
         event.registerSpriteSet(TFGParticles.RAILGUN_AMMO.get(), RailgunAmmoProvider::new);
-        event.registerSpriteSet(TFGParticles.COLORED_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 15117444)));
+
+        // prospector
+        event.registerSpriteSet(TFGParticles.ORE_PROSPECTOR.get(), OreProspectorProvider::new);
+        event.registerSpriteSet(TFGParticles.ORE_PROSPECTOR_VEIN.get(), OreProspectorVeinProvider::new);
+
+        //martian wind
+        event.registerSpriteSet(TFGParticles.DEEP_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 12477985))); // avg color of red sand
+        event.registerSpriteSet(TFGParticles.MEDIUM_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 12878934))); // avg color of ad astra mars sand
+        event.registerSpriteSet(TFGParticles.LIGHT_MARS_WIND.get(), (set) -> (new ColoredWindParticleProvider(set, 13606745))); // avg color of ad astra venus sand
     }
 
     @SuppressWarnings("removal")
