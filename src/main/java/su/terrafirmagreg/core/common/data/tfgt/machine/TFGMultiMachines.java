@@ -47,51 +47,15 @@ public class TFGMultiMachines {
 					.pattern(definition -> {
 							IMachineBlock[] inputBuses = Arrays.stream(TFGMachines.RAILGUN_ITEM_LOADER_IN).map(MachineDefinition::get).toArray(IMachineBlock[]::new);
 							return FactoryBlockPattern.start(RelativeDirection.RIGHT, RelativeDirection.FRONT, RelativeDirection.UP)
-									.aisle( "F###F",
-											"#SSS#",
-											"#SSS#",
-											"#ESE#",
-											"F###F")
-									.aisle( "FsssF",
-											"sSCSs",
-											"sCCCs",
-											"sSCSs",
-											"FsysF")
-									.aisle( "F###F",
-											"#LCL#",
-											"#R R#",
-											"#LCL#",
-											"F###F")
-									.aisle( "FFFFF",
-											"FLCLF",
-											"FR RF",
-											"FLCLF",
-											"FFFFF")
-									.aisle( "#####",
-											"#L#L#",
-											"#R R#",
-											"#L#L#",
-											"#####").setRepeatable(3)
-									.aisle( "#####",
-											"#CHC#",
-											"#R R#",
-											"#CHC#",
-											"#####")
-									.aisle( "#####",
-											"#M#M#",
-											"#R R#",
-											"#M#M#",
-											"#####").setRepeatable(3)
-									.aisle( "#####",
-											"#CHC#",
-											"#R R#",
-											"#CHC#",
-											"#####")
-									.aisle( "#####",
-											"#C#C#",
-											"#R R#",
-											"#C#C#",
-											"#####").setRepeatable(2)
+									.aisle( "F###F", "#SSS#", "#SSS#", "#ESE#", "F###F")
+									.aisle( "FsssF", "sSCSs", "sCCCs", "sSCSs", "FsysF")
+									.aisle( "F###F", "#LCL#", "#R R#", "#LCL#", "F###F")
+									.aisle( "FFFFF", "FLCLF", "FR RF", "FLCLF", "FFFFF")
+									.aisle( "#####", "#L#L#", "#R R#", "#L#L#", "#####").setRepeatable(3)
+									.aisle( "#####", "#CHC#", "#R R#", "#CHC#", "#####")
+									.aisle( "#####", "#M#M#", "#R R#", "#M#M#", "#####").setRepeatable(3)
+									.aisle( "#####", "#CHC#", "#R R#", "#CHC#", "#####")
+									.aisle( "#####", "#C#C#", "#R R#", "#C#C#", "#####").setRepeatable(2)
 									.where('y', Predicates.controller(Predicates.blocks(definition.get())))
 									.where(' ', Predicates.air())
 									.where('#', Predicates.any())
@@ -157,7 +121,8 @@ public class TFGMultiMachines {
 				.or(Predicates.autoAbilities(definition.getRecipeTypes()))
 				.or(Predicates.autoAbilities(true, false, false)))
 			.where(' ', Predicates.any())
-			.where('F', Predicates.frames(GTMaterials.Steel))
+			.where('F', Predicates.frames(GTMaterials.Steel)
+                .or(Predicates.blocks(GTBlocks.CASING_STEEL_SOLID.get())))
 			.where('X', Predicates.blockTag(Tags.Blocks.GLASS)
 				.or(Predicates.blocks(ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath("ae2", "quartz_glass")))))
 			.where('D', Predicates.blockTag(BlockTags.DIRT)
@@ -194,7 +159,7 @@ public class TFGMultiMachines {
 		.register();
 
 	private static final Supplier<Block> bioculture_casing =
-			() -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation("tfg", "casings/machine_casing_bioculture"));
+			() -> ForgeRegistries.BLOCKS.getValue(ResourceLocation.fromNamespaceAndPath("tfg", "casings/machine_casing_bioculture"));
 	public static final MultiblockMachineDefinition BIOREACTOR =
 			REGISTRATE.multiblock("bioreactor", BioreactorMachine::new)
 					.rotationState(RotationState.NON_Y_AXIS)
