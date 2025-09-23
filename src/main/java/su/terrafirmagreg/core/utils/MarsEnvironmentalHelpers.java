@@ -6,9 +6,7 @@
 package su.terrafirmagreg.core.utils;
 
 import earth.terrarium.adastra.api.planets.Planet;
-
 import net.dries007.tfc.common.TFCTags;
-import net.dries007.tfc.config.TFCConfig;
 import net.dries007.tfc.util.Helpers;
 import net.dries007.tfc.util.climate.Climate;
 import net.dries007.tfc.util.tracker.WorldTracker;
@@ -25,7 +23,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec2;
-
 import su.terrafirmagreg.core.common.data.TFGBlocks;
 import su.terrafirmagreg.core.common.data.blocks.AbstractLayerBlock;
 import su.terrafirmagreg.core.common.data.blocks.SandPileBlock;
@@ -33,8 +30,8 @@ import su.terrafirmagreg.core.config.TFGConfig;
 
 public final class MarsEnvironmentalHelpers {
 
-    public static final float DUST_SETTLE_SPEED = 0.5f; // sand piles will build at this speed or lower
-    public static final float DUST_LOOSEN_SPEED = 2.0f; // sand piles will erode at this speed or higher
+    public static final float DUST_SETTLE_SPEED = 0.2f; // sand piles will build at this speed or lower
+    public static final float DUST_LOOSEN_SPEED = 0.5f; // sand piles will erode at this speed or higher
     public static final int DUST_SETTLE_RANDOM_TICK_CHANCE = 50;
     public static final int DUST_LOOSEN_RANDOM_TICK_CHANCE = 50;
 
@@ -72,7 +69,7 @@ public final class MarsEnvironmentalHelpers {
         // Snow only accumulates during rain
         final RandomSource random = level.random;
         final int expectedLayers = (int) getExpectedSandLayerHeight(wind.length());
-        if (wind.length() <= DUST_SETTLE_SPEED /* && isAtmosphereDusty(level, surfacePos)*/)
+        if (wind.lengthSquared() <= Math.pow(DUST_SETTLE_SPEED, 2) /* && isAtmosphereDusty(level, surfacePos)*/)
         {
             if (random.nextInt(TFGConfig.SERVER.sandAccumulateChance.get()) == 0)
             {
@@ -87,30 +84,28 @@ public final class MarsEnvironmentalHelpers {
                     }
                 }
             }
-        }
-        else
+        } else if (wind.lengthSquared() >= Math.pow(DUST_LOOSEN_SPEED, 2))
         {
-            if (random.nextInt(TFCConfig.SERVER.snowMeltChance.get()) == 0)
+            if (random.nextInt(TFGConfig.SERVER.sandRemovalChance.get()) == 0)
             {
-                removeSandAt(level, surfacePos, temperature, expectedLayers);
+                removeSandAt(level, surfacePos, expectedLayers);
                 if (random.nextFloat() < 0.2f)
                 {
-                    removeSandAt(level, surfacePos.relative(Direction.Plane.HORIZONTAL.getRandomDirection(random)), temperature, expectedLayers);
+                    removeSandAt(level, surfacePos.relative(Direction.Plane.HORIZONTAL.getRandomDirection(random)), expectedLayers);
                 }
             }
         }
     }
 
-    // TODO: after adding sand piles
-    private static void removeSandAt(Level level, BlockPos surfacePos, float temperature, int expectedLayers) {
-//        // Snow melting - both snow and snow piles
-//        final BlockState state = level.getBlockState(surfacePos);
-//        if (isSnow(state))
-//        {
-//            // When melting snow, we melt layers at +2 from expected, while the temperature is still below zero
-//            // This slowly reduces massive excess amounts of snow, if they're present, but doesn't actually start melting snow a lot when we're still below freezing.
-//            SnowPileBlock.removePileOrSnow(level, surfacePos, state, temperature > 0f ? expectedLayers : expectedLayers + 2);
-//        }
+    // TODO: make this feel more natural
+    private static void removeSandAt(Level level, BlockPos surfacePos, int expectedLayers) {
+        // Snow melting - both snow and snow piles
+        final BlockState state = level.getBlockState(surfacePos);
+        if (isSand(state)) {
+            // When melting snow, we melt layers at +2 from expected, while the temperature is still below zero
+            // This slowly reduces massive excess amounts of snow, if they're present, but doesn't actually start melting snow a lot when we're still below freezing.
+            SandPileBlock.removePileOrSand(level, surfacePos, state, expectedLayers);
+        }
     }
 
     private static boolean placeSandOrSandPile(Level level, BlockPos initialPos, RandomSource random, int expectedLayers) {

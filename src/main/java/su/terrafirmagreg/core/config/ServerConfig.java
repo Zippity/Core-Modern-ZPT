@@ -1,21 +1,19 @@
 package su.terrafirmagreg.core.config;
 
-import static su.terrafirmagreg.core.TFGCore.LOGGER;
-
-import java.util.HashMap;
-import java.util.List;
-
+import earth.terrarium.adastra.api.planets.Planet;
 import net.dries007.tfc.util.Metal;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.registries.ForgeRegistries;
-
-import earth.terrarium.adastra.api.planets.Planet;
-
 import su.terrafirmagreg.core.config.tools.PropickConfig;
 import su.terrafirmagreg.core.config.tools.RenderingPropickConfig;
+
+import java.util.HashMap;
+import java.util.List;
+
+import static su.terrafirmagreg.core.TFGCore.LOGGER;
 
 /**
  * Server Config - Synced from server to client, can have default config settings be customized by users. - Default to
@@ -41,6 +39,7 @@ public final class ServerConfig {
     public final ForgeConfigSpec.ConfigValue<List<? extends String>> SYRINGE_BLACKLIST;
 
     public final ForgeConfigSpec.IntValue sandAccumulateChance;
+    public final ForgeConfigSpec.IntValue sandRemovalChance;
 
     ServerConfig(ForgeConfigSpec.Builder builder) {
         builder.push("hang_glider");
@@ -100,6 +99,9 @@ public final class ServerConfig {
         sandAccumulateChance = builder
                 .comment("The chance that sand piles will accumulate during a sandstorm. Lower values = faster sand pile accumulation, but also more block updates (aka lag).")
                 .defineInRange("sandAccumulateChance", 20, 1, Integer.MAX_VALUE);
+        sandRemovalChance = builder
+                .comment("The chance that sand piles will remove themselves in high wind. Lower values = faster sand pile removal, but also more block updates (aka lag).")
+                .defineInRange("sandRemovalChance", 20, 1, Integer.MAX_VALUE);
 
         builder.pop();
     }

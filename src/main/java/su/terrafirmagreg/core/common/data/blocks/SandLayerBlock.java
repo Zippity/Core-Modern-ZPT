@@ -20,6 +20,7 @@ import net.minecraft.world.level.material.FluidState;
 import org.jetbrains.annotations.Nullable;
 
 public class SandLayerBlock extends AbstractLayerBlock{
+    // TODO: make sand not turn grass into dirt
 
     public SandLayerBlock(Properties properties) {
         super(properties);
