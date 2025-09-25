@@ -1,6 +1,13 @@
 package su.terrafirmagreg.core.client;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
+
 import net.dries007.tfc.TerraFirmaCraft;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -23,6 +30,12 @@ import su.terrafirmagreg.core.common.data.TFGParticles;
 import su.terrafirmagreg.core.common.data.capabilities.ILargeEgg;
 import su.terrafirmagreg.core.common.data.capabilities.LargeEggCapability;
 import su.terrafirmagreg.core.common.data.contianer.LargeNestBoxScreen;
+import su.terrafirmagreg.core.common.data.events.AdvancedOreProspectorEventHelper;
+import su.terrafirmagreg.core.common.data.events.NormalOreProspectorEventHelper;
+import su.terrafirmagreg.core.common.data.events.OreProspectorEvent;
+import su.terrafirmagreg.core.common.data.events.WeakOreProspectorEventHelper;
+import su.terrafirmagreg.core.common.data.particles.OreProspectorProvider;
+import su.terrafirmagreg.core.common.data.particles.OreProspectorVeinProvider;
 import su.terrafirmagreg.core.common.data.particles.ColoredWindParticleProvider;
 import su.terrafirmagreg.core.common.data.particles.RailgunAmmoProvider;
 import su.terrafirmagreg.core.common.data.particles.RailgunBoomProvider;
@@ -33,8 +46,8 @@ import java.util.List;
 
 public final class TFGClientEventHandler {
 
-    public static final ResourceLocation TFCMetalBlockTexturePattern =
-            ResourceLocation.fromNamespaceAndPath(TerraFirmaCraft.MOD_ID, "block/metal/smooth_pattern");
+    public static final ResourceLocation TFCMetalBlockTexturePattern = ResourceLocation
+            .fromNamespaceAndPath(TerraFirmaCraft.MOD_ID, "block/metal/smooth_pattern");
 
     @SuppressWarnings("removal")
     public TFGClientEventHandler() {
@@ -50,8 +63,62 @@ public final class TFGClientEventHandler {
     }
 
     @SubscribeEvent
-    public void registerParticles(RegisterParticleProvidersEvent event) {
-        // railgun animation
+    public static void onTooltip(@NotNull ItemTooltipEvent event) {
+        var tooltip = event.getToolTip();
+        var stack = event.getItemStack();
+
+        // Check Weak helpers
+        for (WeakOreProspectorEventHelper helper : OreProspectorEvent.getWeakOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                tooltip.add(Component.translatable(
+                        "tfg.tooltip.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)).withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+
+        // Check Normal helpers
+        for (NormalOreProspectorEventHelper helper : OreProspectorEvent.getNormalOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                tooltip.add(Component.translatable(
+                        "tfg.tooltip.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)).withStyle(ChatFormatting.YELLOW));
+                tooltip.add(Component.translatable("tfg.tooltip.ore_prospector_count")
+                        .withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+
+        // Check Advanced helpers
+        for (AdvancedOreProspectorEventHelper helper : OreProspectorEvent.getAdvancedOreProspectorListHelper()) {
+            if (stack.is(helper.getItemTag())) {
+                // Determine the mode key based on centersOnly
+                String modeKey = helper.isCentersOnly()
+                        ? "tfg.tooltip.ore_prospector_mode_vein"
+                        : "tfg.tooltip.ore_prospector_mode_block";
+
+                tooltip.add(Component.translatable(
+                        "tfg.tooltip.ore_prospector_stats",
+                        helper.getLength(),
+                        (int) (helper.getHalfWidth() * 2),
+                        (int) (helper.getHalfHeight() * 2)).withStyle(ChatFormatting.YELLOW));
+
+                tooltip.add(Component.translatable("tfg.tooltip.ore_prospector_count")
+                        .withStyle(ChatFormatting.YELLOW));
+                tooltip.add(Component.translatable("tfg.tooltip.ore_prospector_xray",
+                        Component.translatable(modeKey) // pass the localized "vein" or "per block"
+                ).withStyle(ChatFormatting.YELLOW));
+                return;
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void registerParticles(@NotNull RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(TFGParticles.RAILGUN_BOOM.get(), RailgunBoomProvider::new);
         event.registerSpriteSet(TFGParticles.RAILGUN_AMMO.get(), RailgunAmmoProvider::new);
         // martian wind
@@ -76,23 +143,19 @@ public final class TFGClientEventHandler {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private static void onItemTooltip(ItemTooltipEvent event)
-    {
+    private static void onItemTooltip(ItemTooltipEvent event) {
         final ItemStack stack = event.getItemStack();
         final List<Component> text = event.getToolTip();
-        if (!stack.isEmpty())
-        {
+        if (!stack.isEmpty()) {
             final @Nullable ILargeEgg egg = LargeEggCapability.get(stack);
-            if (egg != null)
-            {
+            if (egg != null) {
                 egg.addTooltipInfo(text);
             }
         }
     }
 
     @SubscribeEvent
-    public void modConstruct(FMLConstructModEvent event)
-    {
+    public void modConstruct(FMLConstructModEvent event) {
 
     }
 }
