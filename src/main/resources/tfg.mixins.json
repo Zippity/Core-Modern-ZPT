@@ -100,6 +100,7 @@
         "common.firmalife.CompostTumblerBlockEntityMixin",
         "common.firmalife.CompostTumblerBlockMixin",
         "common.firmalife.HydroponicPlanterBlockEntityMixin",
+        "common.firmalife.LargePlanterBlockEntityLightMixin",
         "common.firmalife.LargePlanterBlockEntityOxygenMixin",
         "common.firmalife.MixinFoodShelfBlockEntity",
         "common.firmalife.MixinGreenhousePortBlock",
