@@ -4,22 +4,110 @@ import groovy.json.JsonSlurper
 File mainResources = file('src/main/resources')
 File generatedResources = file('src/generated/resources')
 
-processResources {
+abstract class MergeTagResourcesTask extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract ConfigurableFileCollection getMainTagFiles()
+
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract ConfigurableFileCollection getGeneratedTagFiles()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @TaskAction
+    void mergeTags() {
+        Set<String> paths = new LinkedHashSet<>()
+        JsonSlurper slurper = new JsonSlurper()
+
+        [mainTagFiles, generatedTagFiles].each { ConfigurableFileCollection files ->
+            files.files.each { File file ->
+                String path = relativizePath(file)
+                if (isTagJson(path)) {
+                    paths.add(path)
+                }
+            }
+        }
+
+        paths.each { String path ->
+            File mainFile = new File(project.file('src/main/resources'), path)
+            File generatedFile = new File(project.file('src/generated/resources'), path)
+            File targetFile = outputDir.file(path).get().asFile
+
+            targetFile.parentFile.mkdirs()
+
+            if (!mainFile.exists()) {
+                targetFile.bytes = generatedFile.bytes
+                return
+            }
+
+            if (!generatedFile.exists()) {
+                targetFile.bytes = mainFile.bytes
+                return
+            }
+
+            Map<String, Object> main = slurper.parse(mainFile) as Map<String, Object>
+            Map<String, Object> generated = slurper.parse(generatedFile) as Map<String, Object>
+
+            if (main['replace'] == true) {
+                targetFile.bytes = mainFile.bytes
+                return
+            }
+
+            if (generated['replace'] == true) {
+                targetFile.bytes = generatedFile.bytes
+                return
+            }
+
+            Set<Object> values = new LinkedHashSet<>()
+            List<Object> mainValues = (main['values'] ?: []) as List<Object>
+            List<Object> generatedValues = (generated['values'] ?: []) as List<Object>
+
+            values.addAll(mainValues)
+            values.addAll(generatedValues)
+
+            main['values'] = new ArrayList<>(values)
+            targetFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(main))
+        }
+    }
+
+    private static boolean isTagJson(String path) {
+        return path ==~ /^data\/[^\/]+\/tags\/[^\/]+\/.+\.json$/
+    }
+
+    private String relativizePath(File file) {
+        File base = file.path.contains('/src/main/resources/') ? project.file('src/main/resources') : project.file('src/generated/resources')
+        return base.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+    }
+}
+
+def mergeTagResources = tasks.register('mergeTagResources', MergeTagResourcesTask) {
+    mainTagFiles.from(fileTree(mainResources) {
+        include 'data/**/tags/**/*.json'
+    })
+    generatedTagFiles.from(fileTree(generatedResources) {
+        include 'data/**/tags/**/*.json'
+    })
+    outputDir.set(layout.buildDirectory.dir('generated/mergedResources'))
+}
+
+tasks.named('processResources') {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     Map<String, Object> replaceProperties = [
-            'mod_id'              : "${mod_id}",
-            'mod_name'            : "${mod_name}",
-            'mod_version'         : "${mod_version}",
-            'mod_description'     : "${mod_description}",
-            'mod_authors'         : "${mod_authors}",
-            'mod_credits'         : "${mod_credits}",
-            'mod_url'             : "${mod_url}",
-            'mod_logo_path'       : "${mod_logo_path}",
-            'minecraft_version'   : "${minecraft_version}",
-            'forge_version'       : "${forge_version}",
-            'forge_version_range' : "${loader_version_range}",
-            'loader_version_range': "${loader_version_range}"
+            'mod_id'              : mod_id,
+            'mod_name'            : mod_name,
+            'mod_version'         : mod_version,
+            'mod_description'     : mod_description,
+            'mod_authors'         : mod_authors,
+            'mod_credits'         : mod_credits,
+            'mod_url'             : mod_url,
+            'mod_logo_path'       : mod_logo_path,
+            'minecraft_version'   : minecraft_version,
+            'forge_version'       : forge_version,
+            'forge_version_range' : loader_version_range,
+            'loader_version_range': loader_version_range
     ]
 
     List<String> filterList = [
@@ -39,9 +127,7 @@ processResources {
         isTagJson(it.path)
     }
 
-    doLast {
-        mergeTags(mainResources, generatedResources, destinationDir)
-    }
+    from(mergeTagResources)
 }
 
 processDevResources {
@@ -52,84 +138,8 @@ static boolean isTagJson(String path) {
     return path ==~ /^data\/[^\/]+\/tags\/[^\/]+\/.+\.json$/
 }
 
-static void mergeTags(
-        File mainResources,
-        File generatedResources,
-        File destinationDir
-) {
-    Set<String> paths = new LinkedHashSet<>()
-
-    [mainResources, generatedResources].each { File resources ->
-        if (!resources.exists()) {
-            return
-        }
-
-        resources.eachFileRecurse { File file ->
-            if (!file.isFile()) {
-                return
-            }
-
-            String path = resources.toPath()
-                    .relativize(file.toPath())
-                    .toString()
-                    .replace('\\', '/')
-
-            if (isTagJson(path)) {
-                paths.add(path)
-            }
-        }
-    }
-
-    JsonSlurper slurper = new JsonSlurper()
-
-    paths.each { String path ->
-        File mainFile = new File(mainResources, path)
-        File generatedFile = new File(generatedResources, path)
-        File targetFile = new File(destinationDir, path)
-
-        targetFile.parentFile.mkdirs()
-
-        if (!mainFile.exists()) {
-            targetFile.bytes = generatedFile.bytes
-            return
-        }
-
-        if (!generatedFile.exists()) {
-            targetFile.bytes = mainFile.bytes
-            return
-        }
-
-        Map<String, Object> main = slurper.parse(mainFile) as Map<String, Object>
-        Map<String, Object> generated = slurper.parse(generatedFile) as Map<String, Object>
-
-        if (main['replace'] == true) {
-            targetFile.bytes = mainFile.bytes
-            return
-        }
-
-        if (generated['replace'] == true) {
-            targetFile.bytes = generatedFile.bytes
-            return
-        }
-
-        Set<Object> values = new LinkedHashSet<>()
-
-        List<Object> mainValues = (main['values'] ?: []) as List<Object>
-        List<Object> generatedValues = (generated['values'] ?: []) as List<Object>
-
-        values.addAll(mainValues)
-        values.addAll(generatedValues)
-
-        main['values'] = new ArrayList<>(values)
-
-        targetFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(main)
-        )
-    }
-}
-
-tasks.register("prepareServerDev") {
-
-    File serverDir = file("run/server")
+tasks.register('prepareServerDev') {
+    File serverDir = file('run/server')
     File eulaFile = file("${serverDir}/eula.txt")
     File propsFile = file("${serverDir}/server.properties")
 
