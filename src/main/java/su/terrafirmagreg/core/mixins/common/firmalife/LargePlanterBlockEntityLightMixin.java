@@ -10,7 +10,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-
 /**
  * Overrides the skylight validation for Firmalife's {@link LargePlanterBlockEntity} to allow growth under block light as well as skylight.
  *
