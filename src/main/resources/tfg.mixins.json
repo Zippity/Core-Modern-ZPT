@@ -1,5 +1,6 @@
 {
     "mixins": [
+        "client.afc.TapBlockEntityProviderMixin",
         "client.create.ChainConveyorRendererMixin",
         "client.gtceu.GTForgeClientEventListenerMixin",
         "client.minecraft.AbstractContainerScreenMixin",
@@ -28,6 +29,7 @@
         "common.ae2.InitP2PAttunementsMixin",
         "common.ae2.StorageHelperMixin",
         "common.ae2.WirelessTerminalMenuHostMixin",
+        "common.afc.TapBlockEntityMixin",
         "common.arthropocolypse.IceCrawlerMixin",
         "common.arthropocolypse.MealwormBeetleMixin",
         "common.arthropocolypse.PlaterodrilusMixin",
