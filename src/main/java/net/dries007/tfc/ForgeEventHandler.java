@@ -122,6 +122,7 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -226,6 +227,8 @@ import net.dries007.tfc.util.tracker.WorldTrackerCapability;
 import net.dries007.tfc.world.ChunkGeneratorExtension;
 import net.dries007.tfc.world.chunkdata.ChunkData;
 import net.dries007.tfc.world.chunkdata.ChunkDataCapability;
+import su.terrafirmagreg.core.common.block.GasBurnerBlock;
+import su.terrafirmagreg.core.common.blockentity.GasBurnerBlockEntity;
 import su.terrafirmagreg.core.utils.CustomSpawnHelper;
 import su.terrafirmagreg.core.utils.CustomSpawnSaveHandler;
 
@@ -910,6 +913,11 @@ public final class ForgeEventHandler
             furnace.extinguish(state);
             event.setCanceled(true);
         }
+        else if (blockEntity instanceof GasBurnerBlockEntity burner && state.getValue(GasBurnerBlock.LIT))
+        {
+            burner.extinguish(state);
+            event.setCanceled(true);
+        }
         else if (blockEntity instanceof CrucibleBlockEntity crucible)
         {
             final var cap = Helpers.getCapability(crucible, HeatCapability.BLOCK_CAPABILITY);
@@ -1103,6 +1111,12 @@ public final class ForgeEventHandler
                     event.setCanceled(true);
                 }
             }
+
+			// For some reason, installing TFC caelum makes slimes spawn on the surface, so here's an extra check
+			if (entity.getType() == EntityType.SLIME && event.getLevel().getRawBrightness(entity.blockPosition(), 0) != 0) {
+				event.setSpawnCancelled(true);
+				event.setCanceled(true);
+			}
         }
     }
 

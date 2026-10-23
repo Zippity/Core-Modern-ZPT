@@ -99,6 +99,8 @@ public final class TFGTags {
         public static final TagKey<Item> ROPE_LADDERS = createItemTag("rope_ladders");
         public static final TagKey<Item> CRAFTING_STATIONS = createItemTag("crafting_stations");
 
+        public static final TagKey<Item> TROWEL_BLACKLIST = createItemTag("trowel_blacklist");
+
         private static TagKey<Item> createItemTag(String path) {
             return createItemTag(TFGCore.id(path));
         }
@@ -147,6 +149,7 @@ public final class TFGTags {
 
         // Environment system tags
         public static final TagKey<Block> AtmospherePassable = createBlockTag("atmosphere_passable");
+        public static final TagKey<Block> AtmosphereHeatPassable = createBlockTag("atmosphere_heat_passable");
         public static final TagKey<Block> AtmosphereImpassable = createBlockTag("atmosphere_impassable");
         public static final TagKey<Block> AtmosphereUseOutline = createBlockTag("atmosphere_use_outline");
         public static final TagKey<Block> AtmosphereCheckFacades = createBlockTag("atmosphere_check_facades");

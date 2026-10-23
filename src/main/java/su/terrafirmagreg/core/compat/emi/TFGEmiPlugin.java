@@ -3,20 +3,19 @@ package su.terrafirmagreg.core.compat.emi;
 import java.util.Arrays;
 import java.util.Set;
 
-import com.forsteri.createliquidfuel.core.BurnerStomachHandler;
+import com.eerussianguy.firmalife.common.blocks.FLBlocks;
+import com.eerussianguy.firmalife.common.util.Plantable;
 import com.gregtechceu.gtceu.api.registry.GTRegistries;
 import com.gregtechceu.gtceu.common.data.GTBlocks;
 import com.gregtechceu.gtceu.common.data.GTItems;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.AllTags;
 
 import net.dries007.tfc.common.items.TFCItems;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
@@ -35,6 +34,7 @@ import su.terrafirmagreg.core.common.data.blocks.TFGBlocks;
 import su.terrafirmagreg.core.common.data.blocks.TFGBlocks_Create;
 import su.terrafirmagreg.core.common.data.tfgt.TFGMultiMachines;
 import su.terrafirmagreg.core.common.recipe.ArtisanRecipe;
+import su.terrafirmagreg.core.common.recipe.GasBurnerFuelRecipe;
 import su.terrafirmagreg.core.common.recipe.repair.ItemRepairRecipe;
 import su.terrafirmagreg.core.common.tfgt.machine.multiblock.steam.TFGLargeBoilerMachine;
 import su.terrafirmagreg.core.world.new_ow_wg.WorldgenVersionData;
@@ -45,9 +45,6 @@ public class TFGEmiPlugin implements EmiPlugin {
     public static final EmiRecipeCategory ORE_VEIN_INFO = new EmiRecipeCategory(TFGCore.id("ore_vein_info"),
             EmiStack.of(GTItems.PROSPECTOR_LV));
 
-    public static final EmiRecipeCategory BLAZE_BURNER = new EmiRecipeCategory(TFGCore.id("blaze_burner"),
-            EmiStack.of(AllBlocks.BLAZE_BURNER.asItem()));
-
     public static final EmiRecipeCategory COMBUSTION_ENGINE = new EmiRecipeCategory(TFGCore.id("combustion_engine"),
             EmiStack.of(TFGBlocks_Create.STEEL_COMBUSTION_ENGINE.asItem()));
 
@@ -57,6 +54,9 @@ public class TFGEmiPlugin implements EmiPlugin {
     public static final EmiRecipeCategory ARTISAN_TABLE = new EmiRecipeCategory(TFGCore.id("artisan_table"),
             EmiStack.of(TFGBlocks.ARTISAN_TABLE.get()));
 
+    public static final EmiRecipeCategory GAS_BURNER = new EmiRecipeCategory(TFGCore.id("gas_burner_fuel"),
+            EmiStack.of(TFGBlocks.GAS_BURNER.get()));
+
     public static final EmiRecipeCategory LARGE_BOILER_BOOSTER = new EmiRecipeCategory(TFGCore.id("large_boiler_booster"),
             EmiStack.of(GTBlocks.FIREBOX_STEEL.asItem()));
 
@@ -65,6 +65,9 @@ public class TFGEmiPlugin implements EmiPlugin {
 
     public static final EmiRecipeCategory FLUID_VEIN_INFO = new EmiRecipeCategory(TFGCore.id("fluid_vein_info"),
             EmiStack.of(GTItems.PROSPECTOR_HV));
+
+    public static final EmiRecipeCategory GREENHOUSE_PLANTABLE = new EmiRecipeCategory(TFGCore.id("greenhouse_plantable"),
+            EmiStack.of(FLBlocks.LARGE_PLANTER.get()));
 
     @Override
     public void register(EmiRegistry emiRegistry) {
@@ -111,19 +114,6 @@ public class TFGEmiPlugin implements EmiPlugin {
                 null, null, 50, null,
                 null));
 
-        //Blaze Burner
-        emiRegistry.addCategory(BLAZE_BURNER);
-        emiRegistry.addWorkstation(BLAZE_BURNER, EmiStack.of(AllBlocks.BLAZE_BURNER.asItem()));
-        for (var liquid_fuel : BurnerStomachHandler.LIQUID_BURNER_FUEL_MAP.entrySet()) {
-            emiRegistry.addRecipe(new LiquidBlazeBurnerRecipe(liquid_fuel));
-        }
-        for (var normal_fuel : ForgeRegistries.ITEMS.tags().getTag(AllTags.AllItemTags.BLAZE_BURNER_FUEL_REGULAR.tag).stream().toList()) {
-            emiRegistry.addRecipe(new SolidBlazeBurnerRecipe(normal_fuel, false));
-        }
-        for (var super_fuel : ForgeRegistries.ITEMS.tags().getTag(AllTags.AllItemTags.BLAZE_BURNER_FUEL_SPECIAL.tag).stream().toList()) {
-            emiRegistry.addRecipe(new SolidBlazeBurnerRecipe(super_fuel, true));
-        }
-
         // Combustion Engine
         emiRegistry.addCategory(COMBUSTION_ENGINE);
         emiRegistry.addWorkstation(COMBUSTION_ENGINE, EmiStack.of(TFGBlocks_Create.STEEL_COMBUSTION_ENGINE.asItem()));
@@ -154,6 +144,13 @@ public class TFGEmiPlugin implements EmiPlugin {
             emiRegistry.addRecipe(new ArtisanTableEmiRecipe(recipe));
         }
 
+        //Gas Burner
+        emiRegistry.addCategory(GAS_BURNER);
+        emiRegistry.addWorkstation(GAS_BURNER, EmiStack.of(TFGBlocks.GAS_BURNER.get().asItem()));
+        for (GasBurnerFuelRecipe recipe : emiRegistry.getRecipeManager().getAllRecipesFor(TFGRecipeTypes.GAS_BURNER_FUEL.get()).stream().toList()) {
+            emiRegistry.addRecipe(new GasBurnerFuelEmiRecipe(recipe));
+        }
+
         // Item Repair
         emiRegistry.addCategory(ITEM_REPAIR);
         emiRegistry.addWorkstation(ITEM_REPAIR, EmiStack.of(net.minecraft.world.item.Items.CRAFTING_TABLE));
@@ -175,6 +172,13 @@ public class TFGEmiPlugin implements EmiPlugin {
             // return onLegacyWorldgen() ? legacyVein : !legacyVein;
             return onLegacyWorldgen() == legacyVein;
         }).forEach(fluidDef -> emiRegistry.addRecipe(new FluidVeinRecipe(fluidDef)));
+
+        //Greenhouse Plantable
+        emiRegistry.addCategory(GREENHOUSE_PLANTABLE);
+        for (Plantable plantable : Plantable.MANAGER.getValues()) {
+            emiRegistry.addWorkstation(GREENHOUSE_PLANTABLE, EmiStack.of(GreenhousePlantableEmiRecipe.resolvePlanterBlock(plantable.getPlanterType())));
+            emiRegistry.addRecipe(new GreenhousePlantableEmiRecipe(plantable));
+        }
     }
 
     private static final Set<ResourceLocation> LEGACY_FLUID_VEINS = Set.of(
@@ -199,6 +203,24 @@ public class TFGEmiPlugin implements EmiPlugin {
 
     public static void createItemWidget(WidgetHolder holder, int offsetY, int offsetX, EmiIngredient stack) {
         SlotWidget widget = new SlotWidget(stack, offsetX, offsetY);
+        holder.add(widget);
+    }
+
+    /**
+     * Creates a blank item widget that does not render anything.
+     * Useful when you want to be able to hover over another element to view an item tooltip.
+     * @param holder WidgetHolder.
+     * @param stack Item stack.
+     * @param offsetX X-position on screen.
+     * @param offsetY Y-position on screen.
+     */
+    public static void createBlankItemWidget(WidgetHolder holder, EmiIngredient stack, int offsetX, int offsetY) {
+        SlotWidget widget = new SlotWidget(stack, offsetX, offsetY) {
+            @Override
+            public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+            }
+        };
+        widget.drawBack(false);
         holder.add(widget);
     }
 

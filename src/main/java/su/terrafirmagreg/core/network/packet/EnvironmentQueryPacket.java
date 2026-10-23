@@ -34,10 +34,9 @@ public record EnvironmentQueryPacket(BlockPos pos) {
             // Query all environment properties
             EnvironmentClientCache.EnvironmentState state = new EnvironmentClientCache.EnvironmentState(
                     EnvironmentSystem.hasOxygen(player.level(), pkt.pos),
-                    EnvironmentSystem.hasNormalGravity(player.level(), pkt.pos),
-                    true,
-                    true // TODO: hasNormalTemperature/hasNormalPressure when implemented
-            );
+                    EnvironmentSystem.getGravity(player.level(), pkt.pos),
+                    EnvironmentSystem.getTemperature(player.level(), pkt.pos),
+                    EnvironmentSystem.getPressure(player.level(), pkt.pos));
 
             // Send response back to the client
             TFGNetworkHandler.sendEnvironmentResponse(player, pkt.pos, state);
